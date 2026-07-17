@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscripciones Numérica Tomista 2026-2 | USTA Villavicencio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --usta-blue: #003B70;
+            --usta-gold: #F1C400;
+            --usta-red: #C8102E;
+        }
+        
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        
+        .header-usta {
+            background-color: #ffffff;
+            color: var(--usta-blue);
+            border-bottom: 5px solid var(--usta-gold);
+            padding: 2rem 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .logo-usta { height: 110px; }
+
+        .cupo-card { transition: all 0.2s ease; cursor: pointer; border: 2px solid #e9ecef; border-radius: 10px; }
+        .cupo-card:hover:not(.disabled) { border-color: var(--usta-blue); box-shadow: 0 0.5rem 1rem rgba(0,59,112,.15); transform: translateY(-2px); }
+        .cupo-card.selected { border-color: var(--usta-blue); background-color: #f0f7ff; border-width: 2px; }
+        .cupo-card.disabled { opacity: 0.6; cursor: not-allowed; border-color: var(--usta-red); background-color: #fff5f5; }
+        
+        fieldset { border: none; border-radius: 10px; padding: 2rem; background-color: #ffffff; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
+        legend { font-size: 1.2rem; font-weight: bold; color: var(--usta-blue); border-bottom: 3px solid var(--usta-gold); padding-bottom: 8px; margin-bottom: 20px; width: 100%; float: none; }
+        
+        .btn-usta { background-color: var(--usta-blue); color: white; border: none; transition: 0.3s; }
+        .btn-usta:hover { background-color: #002244; color: white; transform: scale(1.01); }
+        
+        .d-none { display: none !important; }
+    </style>
+</head>
+<body>
+
+<header class="header-usta mb-5">
+    <div class="container d-flex flex-column flex-md-row align-items-center justify-content-center justify-content-md-start">
+        <img src="LOGO-USTAVILLAVICENCIO-VERTICAL-NEGRO.png" alt="Escudo USTA" class="logo-usta me-md-4 mb-3 mb-md-0">
+        <div class="text-center text-md-start">
+            <h4 class="mb-1 text-uppercase fw-light" style="letter-spacing: 2px; font-size: 1.1rem;">Universidad Santo Tomás</h4>
+            <h1 class="mb-1 fw-bold">Sede Villavicencio</h1>
+            <h5 class="mb-0" style="color: var(--usta-gold);">Dirección de Ciencias Básicas</h5>
+        </div>
+    </div>
+</header>
+
+<div class="container pb-5">
+    
+    <div id="mensaje_sistema" class="alert d-none shadow-sm fw-bold border-0" role="alert"></div>
+
+    <!-- ==========================================
+         PANTALLA DE BLOQUEO (GATEKEEPER)
+    =========================================== -->
+    <div id="pantalla-bloqueo" class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-0 p-4 rounded-3 bg-white">
+                <div class="text-center mb-4">
+                    <i class="bi bi-shield-lock-fill text-warning fs-1"></i>
+                    <h3 class="fw-bold mt-2" style="color: var(--usta-blue);">Acceso Institucional</h3>
+                    <p class="text-muted small">Ingresa tu correo oficial para recibir tu código de acceso.</p>
+                </div>
+                
+                <!-- Paso 1: Pedir Correo -->
+                <div id="otp-paso-correo">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Correo de la Universidad *</label>
+                        <input type="email" id="verificar-correo" class="form-control" placeholder="ejemplo@ustavillavicencio.edu.co o @ustavillavo.edu.co">
+                    </div>
+                    <button id="btn-enviar-codigo" class="btn btn-usta w-100 py-2 fw-bold">Enviar Código de Acceso</button>
+                </div>
+
+                <!-- Paso 2: Pedir PIN -->
+                <div id="otp-paso-pin" class="d-none">
+                    <div class="alert alert-success text-center py-2 mb-3 small">
+                        Hemos enviado un código a tu correo. Por favor revísalo.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-center d-block">Código de Seguridad (4 dígitos)</label>
+                        <input type="number" id="input-pin" class="form-control text-center fs-3 fw-bold" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength);" maxlength="4" placeholder="0000">
+                    </div>
+                    <button id="btn-verificar-pin" class="btn btn-usta w-100 py-2 fw-bold">Validar Código</button>
+                    <button id="btn-volver-correo" class="btn btn-link text-muted w-100 mt-2 text-decoration-none small">Usar otro correo</button>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="#" id="btn-ver-admin" class="text-muted text-decoration-none small"><i class="bi bi-lock-fill"></i> Acceso Administrativo</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VISTA ESTUDIANTE: FORMULARIO
+    =========================================== -->
+    <div id="vista-estudiante" class="d-none">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold" style="color: var(--usta-blue);">Inscripciones Numérica Tomista</h2>
+            <span class="badge bg-secondary fs-6 px-3 py-2">Periodo Académico 2026-2</span>
+        </div>
+
+        <form id="formInscripcion" novalidate>
+            <fieldset class="mb-4">
+                <legend>Información del Estudiante</legend>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fw-bold">Nombres Completos *</label>
+                        <input type="text" class="form-control bg-light" id="nombres" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fw-bold">Apellidos Completos *</label>
+                        <input type="text" class="form-control bg-light" id="apellidos" required>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label text-muted fw-bold">Tipo de Documento *</label>
+                        <select class="form-select bg-light" id="tipo_documento" required>
+                            <option value="">Seleccione...</option>
+                            <option value="CC">Cédula de Ciudadanía</option>
+                            <option value="TI">Tarjeta de Identidad</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label text-muted fw-bold">Número de Documento *</label>
+                        <input type="number" class="form-control bg-light" id="numero_documento" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fw-bold">Correo Institucional Verificado *</label>
+                        <input type="email" class="form-control bg-secondary text-white fw-bold" id="correo_institucional" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted fw-bold">Programa Académico *</label>
+                        <select class="form-select bg-light" id="programa" required>
+                            <option value="">Seleccione su programa...</option>
+                            <option value="Administración de Empresas Agropecuarias">Administración de Empresas Agropecuarias</option>
+                            <option value="Arquitectura">Arquitectura</option>
+                            <option value="Arte y Cultura">Arte y Cultura</option>
+                            <option value="Cultura Física, Deporte y Recreación">Cultura Física, Deporte y Recreación</option>
+                            <option value="Contaduría Pública">Contaduría Pública</option>
+                            <option value="Derecho">Derecho</option>
+                            <option value="Ingeniería Ambiental">Ingeniería Ambiental</option>
+                            <option value="Ingeniería Civil">Ingeniería Civil</option>
+                            <option value="Ingeniería Industrial">Ingeniería Industrial</option>
+                            <option value="Ingeniería Mecánica">Ingeniería Mecánica</option>
+                            <option value="Ingeniería de Sistemas">Ingeniería de Sistemas</option>
+                            <option value="Ingeniería Mecatrónica">Ingeniería Mecatrónica</option>
+                            <option value="Lenguas Extranjeras">Lenguas Extranjeras</option>
+                            <option value="Negocios Internacionales">Negocios Internacionales</option>
+                            <option value="Psicología">Psicología</option>
+                            <option value="Otro">Otro / Posgrado / Transferencia</option>
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="mb-4">
+                <legend>Niveles y Horarios Disponibles</legend>
+                <div class="row g-3" id="contenedor_horarios"></div>
+            </fieldset>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" id="btnSubmit" class="btn btn-usta btn-lg fw-bold py-3">Registrar Inscripción</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ==========================================
+         VISTA ADMINISTRADOR
+    =========================================== -->
+    <div id="vista-admin" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold" style="color: var(--usta-blue);"><i class="bi bi-shield-lock"></i> Panel Administrativo</h2>
+            <div>
+                <button id="btn-exportar" class="btn btn-success me-2"><i class="bi bi-file-earmark-excel"></i> Exportar a Excel</button>
+                <button id="btn-ver-estudiante" class="btn btn-outline-secondary">Volver al Formulario</button>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0 align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Documento</th>
+                                <th>Estudiante</th>
+                                <th>Programa</th>
+                                <th>Nivel y Horario</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-registros">
+                            <!-- Se llena dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// =========================================================================
+// 1. REEMPLAZA ESTA URL CON TU URL GENERADA EN APPS SCRIPT
+// =========================================================================
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzsclPprTDfRr5byrgXoogBoHykduxDjVljeE9jLUsfZrW1ESjAfTZ9uGjNPjoIeytY/exec";
+// =========================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    let inscripcionesGuardadas = [];
+    let correoVerificadoGlobal = "";
+
+    let baseDatosCupos = [
+        { id: "viernes_fundamentos", nivel: "Fundamentos de Herramientas", horario: "Viernes 18:00 a 22:00", max: 30 },
+        { id: "sabado_fundamentos", nivel: "Fundamentos de Herramientas", horario: "Sábado 06:00 a 10:00", max: 30 },
+        { id: "viernes_aplicadas", nivel: "Herr. Matemáticas Aplicadas", horario: "Viernes 18:00 a 22:00", max: 30 },
+        { id: "sabado_aplicadas", nivel: "Herr. Matemáticas Aplicadas", horario: "Sábado 06:00 a 10:00", max: 30 },
+        { id: "viernes_computacionales", nivel: "Herr. Computacionales", horario: "Viernes 18:00 a 22:00", max: 30 },
+        { id: "sabado_computacionales", nivel: "Herr. Computacionales", horario: "Sábado 06:00 a 10:00", max: 30 }
+    ];
+
+    const contenedorHorarios = document.getElementById('contenedor_horarios');
+    const form = document.getElementById('formInscripcion');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const mensajeDiv = document.getElementById('mensaje_sistema');
+    const tablaRegistros = document.getElementById('tabla-registros');
+    
+    const pantallaBloqueo = document.getElementById('pantalla-bloqueo');
+    const vistaEstudiante = document.getElementById('vista-estudiante');
+    const vistaAdmin = document.getElementById('vista-admin');
+
+    const btnEnviarCodigo = document.getElementById('btn-enviar-codigo');
+    const btnVerificarPin = document.getElementById('btn-verificar-pin');
+    const btnVolverCorreo = document.getElementById('btn-volver-correo');
+    const inputCorreo = document.getElementById('verificar-correo');
+    const inputPin = document.getElementById('input-pin');
+    const pasoCorreo = document.getElementById('otp-paso-correo');
+    const pasoPin = document.getElementById('otp-paso-pin');
+
+    // Función Segura para leer almacenamiento local (Evita fallas de Sandbox)
+    function obtenerAlmacenamientoSeguro() {
+        try {
+            return JSON.parse(localStorage.getItem('inscripcionesUSTA')) || [];
+        } catch (e) {
+            console.warn("localStorage bloqueado por el entorno. Usando memoria temporal.");
+            return [];
+        }
+    }
+
+    // --- ACCIÓN: Enviar código ---
+    btnEnviarCodigo.addEventListener('click', async () => {
+        const correo = inputCorreo.value.trim().toLowerCase();
+        
+        if (!correo.endsWith('@ustavillavicencio.edu.co') && !correo.endsWith('@ustavillavo.edu.co')) {
+            alert('Acceso Denegado. Debes ingresar un correo oficial institucional (@ustavillavicencio.edu.co o @ustavillavo.edu.co).');
+            return;
+        }
+
+        btnEnviarCodigo.disabled = true;
+        btnEnviarCodigo.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Enviando código...';
+
+        try {
+            const url = `${WEB_APP_URL}?action=sendOTP&correo=${encodeURIComponent(correo)}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if (data.status === 'success') {
+                correoVerificadoGlobal = correo;
+                pasoCorreo.classList.add('d-none');
+                pasoPin.classList.remove('d-none');
+            } else {
+                alert('Ocurrió un error: ' + data.message);
+            }
+        } catch (err) {
+            alert('Error de conexión con los servidores de Google. Verifique la URL de su Web App.');
+        } finally {
+            btnEnviarCodigo.disabled = false;
+            btnEnviarCodigo.textContent = 'Enviar Código de Acceso';
+        }
+    });
+
+    // --- ACCIÓN: Validar PIN ---
+    btnVerificarPin.addEventListener('click', async () => {
+        const pin = inputPin.value.trim();
+        if (pin.length !== 4) {
+            alert('El código debe ser de 4 dígitos.'); return;
+        }
+
+        btnVerificarPin.disabled = true;
+        btnVerificarPin.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Verificando...';
+
+        try {
+            const url = `${WEB_APP_URL}?action=verifyOTP&correo=${encodeURIComponent(correoVerificadoGlobal)}&pin=${encodeURIComponent(pin)}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if (data.status === 'success') {
+                document.getElementById('correo_institucional').value = correoVerificadoGlobal;
+                pantallaBloqueo.classList.add('d-none');
+                vistaEstudiante.classList.remove('d-none');
+                mostrarMensaje('¡Acceso concedido correctamente!', 'success');
+            } else {
+                alert('Código de seguridad incorrecto o ya expiró.');
+            }
+        } catch (err) {
+            alert('Error al autenticar el código.');
+        } finally {
+            btnVerificarPin.disabled = false;
+            btnVerificarPin.textContent = 'Validar Código';
+        }
+    });
+
+    btnVolverCorreo.addEventListener('click', () => {
+        pasoPin.classList.add('d-none');
+        pasoCorreo.classList.remove('d-none');
+        inputPin.value = "";
+    });
+
+    // Carga de la Base de Datos mediante GET
+    async function cargarInscripciones() {
+        if (WEB_APP_URL && WEB_APP_URL !== "REEMPLAZA_CON_TU_URL_DE_APPS_SCRIPT") {
+            try {
+                const response = await fetch(WEB_APP_URL);
+                if (response.ok) {
+                    inscripcionesGuardadas = await response.json();
+                } else {
+                    throw new Error();
+                }
+            } catch (error) {
+                console.warn("Cargando almacenamiento local alternativo seguro.");
+                inscripcionesGuardadas = obtenerAlmacenamientoSeguro();
+            }
+        } else {
+            inscripcionesGuardadas = obtenerAlmacenamientoSeguro();
+        }
+        renderizarHorarios();
+        actualizarTablaAdmin();
+    }
+
+    function renderizarHorarios() {
+        contenedorHorarios.innerHTML = ''; 
+        
+        baseDatosCupos.forEach(item => {
+            const ocupados = inscripcionesGuardadas.filter(insc => insc.id_horario === item.id).length;
+            const estaLleno = ocupados >= item.max;
+            const colorBadge = estaLleno ? 'bg-danger' : (ocupados >= 25 ? 'bg-warning text-dark' : 'bg-success');
+            const textoBadge = estaLleno ? '<i class="bi bi-x-circle"></i> HORARIO LLENO' : `Cupos ocupados: ${ocupados} de ${item.max}`;
+            const disabledClass = estaLleno ? 'disabled' : '';
+
+            const tarjetaHTML = `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card p-3 cupo-card h-100 shadow-sm ${disabledClass}" onclick="seleccionarHorario('${item.id}', ${estaLleno})">
+                        <div class="form-check pointer-events-none mb-2">
+                            <input class="form-check-input select-horario" type="radio" 
+                                   name="horario_seleccionado" id="${item.id}" value="${item.id}" ${estaLleno ? 'disabled' : ''} required>
+                            <label class="form-check-label fw-bold d-block" for="${item.id}" style="color: var(--usta-blue);">
+                                ${item.nivel}
+                            </label>
+                        </div>
+                        <div class="mt-auto">
+                            <small class="text-muted d-block mb-2">🕒 ${item.horario}</small>
+                            <span class="badge ${colorBadge} w-100 py-2">${textoBadge}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            contenedorHorarios.innerHTML += tarjetaHTML;
+        });
+    }
+
+    window.seleccionarHorario = function(id, estaLleno) {
+        if (estaLleno) return;
+        document.getElementById(id).checked = true;
+        document.querySelectorAll('.cupo-card').forEach(card => card.classList.remove('selected'));
+        document.getElementById(id).closest('.cupo-card').classList.add('selected');
+    };
+
+    // --- ACCIÓN: Registrar Formulario ---
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault(); 
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const horarioSeleccionado = document.querySelector('input[name="horario_seleccionado"]:checked');
+        if (!horarioSeleccionado) {
+            mostrarMensaje('Seleccione un nivel y horario.', 'danger'); return;
+        }
+
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Registrando inscripción...';
+        
+        const infoHorario = baseDatosCupos.find(h => h.id === horarioSeleccionado.value);
+        const nuevaInscripcion = {
+            fecha: new Date().toLocaleString('es-CO'),
+            nombres: document.getElementById('nombres').value,
+            apellidos: document.getElementById('apellidos').value,
+            tipo_doc: document.getElementById('tipo_documento').value,
+            documento: document.getElementById('numero_documento').value,
+            correo: correoVerificadoGlobal,
+            programa: document.getElementById('programa').value,
+            id_horario: infoHorario.id,
+            nivel_nombre: infoHorario.nivel,
+            horario_texto: infoHorario.horario
+        };
+
+        if (WEB_APP_URL && WEB_APP_URL !== "REEMPLAZA_CON_TU_URL_DE_APPS_SCRIPT") {
+            try {
+                const url = `${WEB_APP_URL}?action=registrar&data=${encodeURIComponent(JSON.stringify(nuevaInscripcion))}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data && data.status === 'success') {
+                    await cargarInscripciones();
+                    mostrarMensaje('¡Inscripción registrada con éxito en la nube!', 'success');
+                    
+                    setTimeout(() => {
+                        form.reset();
+                        correoVerificadoGlobal = "";
+                        inputCorreo.value = "";
+                        inputPin.value = "";
+                        pasoPin.classList.add('d-none');
+                        pasoCorreo.classList.remove('d-none');
+                        vistaEstudiante.classList.add('d-none');
+                        pantallaBloqueo.classList.remove('d-none');
+                    }, 3000);
+
+                } else {
+                    throw new Error();
+                }
+            } catch (error) {
+                console.error("Error de red:", error);
+                mostrarMensaje('Ocurrió un error al procesar el registro en la nube.', 'danger');
+            }
+        }
+        
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Registrar Inscripción';
+    });
+
+    // PANEL ADMINISTRATIVO
+    document.getElementById('btn-ver-admin').addEventListener('click', (e) => {
+        e.preventDefault();
+        const CLAVE_CORRECTA = "USTAVilla2026"; 
+        const claveIngresada = prompt("🔒 Acceso Restringido. Ingrese la contraseña de administrador:");
+        
+        if (claveIngresada === CLAVE_CORRECTA) {
+            pantallaBloqueo.classList.add('d-none');
+            vistaEstudiante.classList.add('d-none');
+            vistaAdmin.classList.remove('d-none');
+            actualizarTablaAdmin();
+        } else if (claveIngresada !== null) {
+            alert("❌ Contraseña incorrecta. Acceso denegado.");
+        }
+    });
+
+    document.getElementById('btn-ver-estudiante').addEventListener('click', () => {
+        vistaAdmin.classList.add('d-none');
+        pantallaBloqueo.classList.remove('d-none');
+    });
+
+    function actualizarTablaAdmin() {
+        tablaRegistros.innerHTML = '';
+        if(inscripcionesGuardadas.length === 0) {
+            tablaRegistros.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">No hay estudiantes inscritos aún.</td></tr>';
+            return;
+        }
+
+        inscripcionesGuardadas.slice().reverse().forEach(insc => {
+            tablaRegistros.innerHTML += `
+                <tr>
+                    <td><small class="text-muted">${insc.fecha}</small></td>
+                    <td>${insc.tipo_doc} ${insc.documento}</td>
+                    <td><strong>${insc.nombres} ${insc.apellidos}</strong><br><small>${insc.correo}</small></td>
+                    <td>${insc.programa}</td>
+                    <td><span class="badge bg-primary">${insc.nivel_nombre}</span><br><small>${insc.horario_texto}</small></td>
+                </tr>
+            `;
+        });
+    }
+
+    document.getElementById('btn-exportar').addEventListener('click', () => {
+        if(inscripcionesGuardadas.length === 0) {
+            alert('No hay datos para exportar.'); return;
+        }
+
+        let csvContent = "\uFEFF"; 
+        csvContent += "FECHA;TIPO_DOC;DOCUMENTO;NOMBRES;APELLIDOS;CORREO;PROGRAMA;NIVEL;HORARIO\n";
+
+        inscripcionesGuardadas.forEach(row => {
+            csvContent += `"${row.fecha}";"${row.tipo_doc}";"${row.documento}";"${row.nombres}";"${row.apellidos}";"${row.correo}";"${row.programa}";"${row.nivel_nombre}";"${row.horario_texto}"\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "Inscripciones_Numerica_Tomista.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+    function mostrarMensaje(texto, tipo) {
+        let bgClass = tipo === 'success' ? 'bg-success text-white' : 'bg-danger text-white';
+        mensajeDiv.className = `alert ${bgClass} shadow-sm border-0 py-3`;
+        mensajeDiv.innerHTML = texto;
+        mensajeDiv.classList.remove('d-none');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => { mensajeDiv.classList.add('d-none'); }, 5000);
+    }
+
+    cargarInscripciones();
+});
+</script>
+</body>
+</html>
