@@ -67,7 +67,6 @@
                     <p class="text-muted small">Ingresa tu correo oficial para recibir tu código de acceso.</p>
                 </div>
                 
-                <!-- Paso 1: Pedir Correo -->
                 <div id="otp-paso-correo">
                     <div class="mb-3">
                         <label class="form-label fw-bold">Correo de la Universidad *</label>
@@ -76,7 +75,6 @@
                     <button id="btn-enviar-codigo" class="btn btn-usta w-100 py-2 fw-bold">Enviar Código de Acceso</button>
                 </div>
 
-                <!-- Paso 2: Pedir PIN -->
                 <div id="otp-paso-pin" class="d-none">
                     <div class="alert alert-success text-center py-2 mb-3 small">
                         Hemos enviado un código a tu correo. Por favor revísalo.
@@ -183,6 +181,11 @@
             </div>
         </div>
 
+        <!-- Dashboard Estadístico y Cupos -->
+        <div class="row mb-4" id="admin-dashboard">
+            <!-- Se llena dinámicamente -->
+        </div>
+
         <div class="card shadow-sm border-0">
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -209,8 +212,6 @@
 
 <script>
 // =========================================================================
-// 1. REEMPLAZA ESTA URL CON TU URL GENERADA EN APPS SCRIPT
-// =========================================================================
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzsclPprTDfRr5byrgXoogBoHykduxDjVljeE9jLUsfZrW1ESjAfTZ9uGjNPjoIeytY/exec";
 // =========================================================================
 
@@ -233,6 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnSubmit = document.getElementById('btnSubmit');
     const mensajeDiv = document.getElementById('mensaje_sistema');
     const tablaRegistros = document.getElementById('tabla-registros');
+    const adminDashboard = document.getElementById('admin-dashboard');
     
     const pantallaBloqueo = document.getElementById('pantalla-bloqueo');
     const vistaEstudiante = document.getElementById('vista-estudiante');
@@ -246,7 +248,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const pasoCorreo = document.getElementById('otp-paso-correo');
     const pasoPin = document.getElementById('otp-paso-pin');
 
-    // Función Segura para leer almacenamiento local (Evita fallas de Sandbox)
     function obtenerAlmacenamientoSeguro() {
         try {
             return JSON.parse(localStorage.getItem('inscripcionesUSTA')) || [];
@@ -256,7 +257,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- ACCIÓN: Enviar código ---
     btnEnviarCodigo.addEventListener('click', async () => {
         const correo = inputCorreo.value.trim().toLowerCase();
         
@@ -288,7 +288,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- ACCIÓN: Validar PIN ---
     btnVerificarPin.addEventListener('click', async () => {
         const pin = inputPin.value.trim();
         if (pin.length !== 4) {
@@ -325,9 +324,8 @@ document.addEventListener('DOMContentLoaded', function() {
         inputPin.value = "";
     });
 
-    // Carga de la Base de Datos mediante GET
     async function cargarInscripciones() {
-        if (WEB_APP_URL && WEB_APP_URL !== "REEMPLAZA_CON_TU_URL_DE_APPS_SCRIPT") {
+        if (WEB_APP_URL && WEB_APP_URL !== "https://script.google.com/macros/s/AKfycbx6FhY38wLuma5f17WcqjcPAnr0s8-Kc1u4-F-vVvZzOpH6nmxGGBQ1erv2A26MsYDH/exec") {
             try {
                 const response = await fetch(WEB_APP_URL);
                 if (response.ok) {
@@ -384,7 +382,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById(id).closest('.cupo-card').classList.add('selected');
     };
 
-    // --- ACCIÓN: Registrar Formulario ---
     form.addEventListener('submit', async function(e) {
         e.preventDefault(); 
         if (!form.checkValidity()) { form.reportValidity(); return; }
@@ -411,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
             horario_texto: infoHorario.horario
         };
 
-        if (WEB_APP_URL && WEB_APP_URL !== "REEMPLAZA_CON_TU_URL_DE_APPS_SCRIPT") {
+        if (WEB_APP_URL && WEB_APP_URL !== "https://script.google.com/macros/s/AKfycbx6FhY38wLuma5f17WcqjcPAnr0s8-Kc1u4-F-vVvZzOpH6nmxGGBQ1erv2A26MsYDH/exec") {
             try {
                 const url = `${WEB_APP_URL}?action=registrar&data=${encodeURIComponent(JSON.stringify(nuevaInscripcion))}`;
                 const response = await fetch(url);
@@ -445,7 +442,6 @@ document.addEventListener('DOMContentLoaded', function() {
         btnSubmit.textContent = 'Registrar Inscripción';
     });
 
-    // PANEL ADMINISTRATIVO
     document.getElementById('btn-ver-admin').addEventListener('click', (e) => {
         e.preventDefault();
         const CLAVE_CORRECTA = "USTAVilla2026"; 
@@ -466,7 +462,70 @@ document.addEventListener('DOMContentLoaded', function() {
         pantallaBloqueo.classList.remove('d-none');
     });
 
+    function actualizarDashboardAdmin() {
+        let totalInscritos = inscripcionesGuardadas.length;
+        let programas = {};
+        let topPrograma = "Ninguno";
+        let maxPrograma = 0;
+        
+        inscripcionesGuardadas.forEach(insc => {
+            programas[insc.programa] = (programas[insc.programa] || 0) + 1;
+            if(programas[insc.programa] > maxPrograma) {
+                maxPrograma = programas[insc.programa];
+                topPrograma = insc.programa;
+            }
+        });
+
+        let htmlDashboard = `
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm border-0 h-100 p-3" style="background-color: var(--usta-blue); color: white;">
+                    <h6 class="text-uppercase fw-bold mb-1" style="color: var(--usta-gold);">Total Inscritos</h6>
+                    <h2 class="mb-0">${totalInscritos} <small class="fs-6 fw-normal">estudiantes</small></h2>
+                </div>
+            </div>
+            <div class="col-md-8 mb-3">
+                <div class="card shadow-sm border-0 h-100 p-3 bg-white text-dark">
+                    <h6 class="text-uppercase fw-bold text-muted mb-1">Programa de Mayor Demanda</h6>
+                    <h4 class="mb-0" style="color: var(--usta-blue);">${topPrograma} <span class="badge bg-secondary fs-6 ms-2">${maxPrograma} inscritos</span></h4>
+                </div>
+            </div>
+            <div class="col-12 mt-2 mb-3">
+                <h5 class="fw-bold" style="color: var(--usta-blue);">Disponibilidad de Cupos por Horario</h5>
+            </div>
+        `;
+
+        baseDatosCupos.forEach(item => {
+            const ocupados = inscripcionesGuardadas.filter(insc => insc.id_horario === item.id).length;
+            const disponibles = item.max - ocupados;
+            const porcentaje = (ocupados / item.max) * 100;
+            
+            let colorBarra = 'bg-success';
+            if (porcentaje >= 100) colorBarra = 'bg-danger';
+            else if (porcentaje >= 80) colorBarra = 'bg-warning text-dark';
+
+            htmlDashboard += `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card shadow-sm border-0 h-100 p-3 bg-white">
+                        <small class="fw-bold text-muted d-block mb-1">${item.nivel}</small>
+                        <small class="d-block mb-2" style="color: var(--usta-blue);">🕒 ${item.horario}</small>
+                        <div class="progress mb-2" style="height: 10px;">
+                            <div class="progress-bar ${colorBarra}" role="progressbar" style="width: ${porcentaje}%" aria-valuenow="${porcentaje}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small fw-bold">
+                            <span class="text-secondary">Ocupados: ${ocupados}</span>
+                            <span class="${disponibles === 0 ? 'text-danger' : 'text-success'}">Disponibles: ${disponibles}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        adminDashboard.innerHTML = htmlDashboard;
+    }
+
     function actualizarTablaAdmin() {
+        actualizarDashboardAdmin(); // Llamada al nuevo dashboard
+
         tablaRegistros.innerHTML = '';
         if(inscripcionesGuardadas.length === 0) {
             tablaRegistros.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">No hay estudiantes inscritos aún.</td></tr>';
